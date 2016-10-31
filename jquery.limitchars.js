@@ -6,46 +6,45 @@
  *
  */
 (function($) {
-	$.fn.limitc   = function(opts) {
+	$.fn.limitc   = function(_opts) {
 		var defaults = {
-			ttl:         100, //limite de caracteres
-			htmlElement: 'span', //div o span
-			txtEnd:      'No puedes escribir m&aacute;s de {chars} caracteres.', //mensaje al final
-			txt:         'Restan {chars} caracteres.', // mensaje mientras
-			cssClass:    "",
-			element:     "span"
-		};
-		var id       = this.attr("id"),
-			ops = $.extend(defaults, opts),
-			$target = $("#" + id);
-		if($target.length>0) {
-			$target
-				.keyup(function() {
-					$.fn.doLimitc($(this), ops);
-				})
-				.before('<' + ops.htmlElement + ' class="' + ops.cssClass + '"></' + ops.element + '>')
-				.bind("paste", function(event) {
-					$(this).keyup();
-				});
-			$.fn.doLimitc($target, ops);
-			return this;
-		}
-	};
-	$.fn.doLimitc = function($target, ops) {
-		var $span = $target.prev(),
-			t  = target.val(),
-			tl = Number(t.length),
-			ttl = Number(ops.ttl),
-			txtEnd = ops.txtEnd,
-			txt = ops.txt;
-		txtEnd = txtEnd.replace('{chars}', ttl);
-		if(!isNaN(tl) && tl > ttl) {
-			$target.val(t.substr(0, ttl));
-			$span.html(txtEnd);
-			return false;
-		} else {
-			$span.html(txt.replace('{chars}', (ttl - tl)));
-			return true;
-		}
+			charlimit:   100, //Char limit
+			tag:         'span', //div o span
+			tagPosition: 'after', //befor or after
+			tagRelative: '', //null for self or jQuery element
+			txt:         '{chars} chars left.',
+			cssClass:    "limitc-cont"
+		}, opts       = $.extend(defaults, _opts);
+		return this.each(function() {
+			var $target = $(this),
+				$tagRelative = (opts.tagRelative != '') ? $(opts.tagRelative) : $target;
+			if($target.length > 0) {
+				if(!$target.hasClass("limitc-limited")) {
+					$target
+						.addClass("limitc")
+						.keyup(function() {
+							var t = $target.val(),
+								tl = t.length,
+								txt = opts.txt;
+							$targetTag.html(txt.replace('{chars}', (tl >= opts.charlimit) ? 0 : (opts.charlimit - tl)));
+							if(tl >= opts.ttl) {
+								$target.val(t.substr(0, opts.charlimit));
+								return false;
+							}
+							return true;
+						})
+						.bind("paste", function(event) {
+							$target.keyup();
+						});
+					$targetTag = $('<' + opts.tag + '/>').addClass(opts.cssClass);
+					if(opts.tagPosition=='after')
+						$tagRelative.after($targetTag);
+					else
+						$tagRelative.before($targetTag);
+
+					$target.keyup();
+				}
+			}
+		});
 	};
 })(jQuery);
